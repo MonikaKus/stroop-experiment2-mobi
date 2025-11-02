@@ -546,8 +546,6 @@ function screenIntro(){
 }
 
 function screenInstr(){
-  var warn = '<p class="center warning">⚠️ Ten link dotyczy nazywania kolorów. Kontynuuj zgodnie z instrukcją.</p>';
-  
   var keyboardInstr = 
     '<div class="center" style="margin:16px 0">'+
       '<span class="keypill"><span class="k">C</span>CZERWONY</span>'+
@@ -563,11 +561,10 @@ function screenInstr(){
   
   app.innerHTML =
     '<div class="instr-card">'+
-      '<h3 class="center">Instrukcja — NAZYWANIE KOLORU</h3>'+ 
-      warn +
       '<p class="center error-text" style="font-size:20px;">⚠️ NAZYWAJ KOLORY, ignoruj treść słowa!</p>'+
-      '<p class="center">Twoim zadaniem jest jak najszybsze <strong>NAZWANIE KOLORU</strong>, w którym widzisz bodziec (kwadrat lub słowo).</p>'+
+      '<p class="center">Twoim zadaniem jest jak najszybsze <strong>nazwanie koloru kwadratu lub słowa</strong>.</p>'+
       keyboardInstr +
+      '<p class="center">Jeśli się pomylisz, naciśnij właściwy klawisz.</p>'+
       touchInstr +
       '<div class="center" style="margin-top:20px">'+
         '<button class="btn" id="startExp">Zaczynam</button>'+
