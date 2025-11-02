@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Stroop — Nazywanie Kolorów (Grupa K)</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { 
+    height: 100%; 
+    margin: 0; 
+    padding: 0;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+  body {
+    background: #f5f5f5;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  
+  #app {
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  h1, h2 {
+    margin: 0 0 16px;
+    font-weight: 700;
+    color: #333;
+  }
+  
+  h2 { font-size: 28px; }
+  
+  p {
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  
+  .muted { 
+    color: #666;
+    font-size: 14px;
+  }
+  
+  /* Stimulus display */
+  .big {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: clamp(48px, 12vw, 92px);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 
+      0 0 2px rgba(0,0,0,0.3),
+      0 2px 4px rgba(0,0,0,0.2);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding: 20px;
+  }
+  
+  .square {
+    width: clamp(140px, 30vw, 200px);
+    height: clamp(140px, 30vw, 200px);
+    margin: 0 auto;
+    border: 3px solid rgba(0,0,0,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    border-radius: 16px;
+  }
+  
+  .fix {
+    font-size: clamp(36px, 8vw, 60px);
+    color: #666;
+    font-weight: 700;
+  }
+  
+  /* Buttons */
+  .btn {
+    background: #2d6cdf;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.2s;
+    min-width: 140px;
+    touch-action: manipulation;
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+  
+  .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  
+  .row {
+    margin: 20px 0;
+  }
+  
+  input[type=text] {
+    font-size: 20px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 600;
+    width: 200px;
+    max-width: 90%;
+  }
+  
+  input[type=text]:focus {
+    outline: none;
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+  }
+  
+  /* Key indicators */
+  .keypill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    border-radius: 20px;
+    padding: 8px 14px;
+    margin: 6px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 14px;
+  }
+  
+  .keypill .k {
+    display: inline-block;
+    min-width: 28px;
+    text-align: center;
+    border: 2px solid #2d6cdf;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: #f0f0f0;
+    font-weight: 800;
+    font-size: 16px;
+  }
+  
+  /* Instruction card */
+  .instr-card {
+    background: rgba(255,255,255,0.98);
+    color: #333;
+    border-radius: 20px;
+    padding: 24px 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    display: inline-block;
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .instr-card h3 {
+    margin: 0 0 16px;
+    font-size: 24px;
+    color: #2d6cdf;
+    font-weight: 700;
+  }
+  
+  .instr-card p {
+    margin: 12px 0;
+    color: #555;
+  }
+  
+  .center {
+    text-align: center;
+  }
+  
+  /* Stimulus card */
+  .stim-card {
+    background: rgba(255,255,255,0.98);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    border-radius: 20px;
+    padding: clamp(20px, 5vw, 60px);
+    display: inline-block;
+    min-width: min(90vw, 600px);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .block-info {
+    background: #fff;
+    color: #2d6cdf;
+    border: 2px solid #2d6cdf;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 20px 0;
+    font-weight: 700;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .progress {
+    color: #2d6cdf;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  
+  /* Touch buttons for mobile */
+  .touch-buttons {
+    display: none;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    padding: 0 10px;
+  }
+  
+  .touch-btn {
+    min-width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    border: 3px solid #ddd;
+    background: #fff;
+    color: #333;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.15s;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  .touch-btn .letter {
+    font-size: 24px;
+    font-weight: 900;
+  }
+  
+  .touch-btn .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .touch-btn:active {
+    transform: scale(0.95);
+    background: #f0f0f0;
+  }
+  
+  .touch-btn.correct {
+    background: rgba(76, 175, 80, 0.5);
+    border-color: #4CAF50;
+  }
+  
+  .touch-btn.wrong {
+    background: rgba(244, 67, 54, 0.5);
+    border-color: #F44336;
+    animation: shake 0.3s;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+  
+  /* Show touch buttons on touch devices */
+  body.touch-device .touch-buttons {
+    display: flex;
+  }
+  
+  body.touch-device .keypill {
+    display: none;
+  }
+  
+  /* Warning styles */
+  .warning {
+    background: rgba(255, 235, 59, 0.95);
+    color: #333;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .error-text {
+    color: #d32f2f;
+    font-weight: 700;
+  }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    h2 { font-size: 22px; }
+    .btn { padding: 12px 24px; font-size: 16px; min-width: 120px; }
+    .instr-card { padding: 20px; }
+    .touch-btn { min-width: 60px; height: 60px; }
+    .touch-btn .letter { font-size: 20px; }
+    .touch-btn .label { font-size: 10px; }
+  }
+  
+  @media (max-height: 600px) {
+    .stim-card { min-height: 150px; padding: 30px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ------- KONFIG ------- */
+var CONFIG = {
+  ITI: 200,
+  FIX: 300,
+  SAFETY_MS: 15000,
+  ENDPOINT_URL: "https://script.google.com/macros/s/AKfycbxs_eVwrgF2_iekrv8s7jmroadRfe5Oe0MAcGafcqUMaTNC7b20OvDyVSY5-C47oIc9/exec",
+  DOWNLOAD_CSV_FALLBACK: true,
+  SEND_TIMEOUT_MS: 10000
+};
+
+/* ------- KOLORY ------- */
+var COLORS = [
+  { name:"CZERWONY",  hex:"#D32F2F", key:"c", idx:1 },
+  { name:"ZIELONY",   hex:"#2E7D32", key:"z", idx:2 },
+  { name:"NIEBIESKI", hex:"#1565C0", key:"n", idx:3 },
+  { name:"FIOLETOWY", hex:"#6A1B9A", key:"f", idx:4 },
+  { name:"BRĄZOWY",   hex:"#6D4C41", key:"b", idx:5 }
+];
+
+/* ------- DEVICE DETECTION ------- */
+var IS_TOUCH_DEVICE = false;
+
+function detectTouchDevice() {
+  IS_TOUCH_DEVICE = (('ontouchstart' in window) ||
+    (navigator.maxTouchPoints > 0) ||
+    (navigator.msMaxTouchPoints > 0));
+  
+  if (IS_TOUCH_DEVICE) {
+    document.body.classList.add('touch-device');
+  }
+}
+
+detectTouchDevice();
+
+/* ------- UTIL ------- */
+var app = document.getElementById('app');
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+function shuffle(a){ 
+  for(var i=a.length-1;i>0;i--){ 
+    var j=Math.floor(Math.random()*(i+1)); 
+    var t=a[i]; a[i]=a[j]; a[j]=t; 
+  } 
+  return a; 
+}
+
+/* ====== GENERATORY ====== */
+function fixNoImmediateRepeats(trials){
+  for(var i=1;i<trials.length;i++){
+    var prev = trials[i-1], cur = trials[i];
+    if(prev.stim_word === cur.stim_word || prev.ink_color === cur.ink_color){
+      for(var j=i+1;j<trials.length;j++){
+        var cand = trials[j], next = trials[i+1];
+        var okPrev = cand.stim_word !== prev.stim_word && cand.ink_color !== prev.ink_color;
+        var okNext = !next || (cand.stim_word !== next.stim_word && cand.ink_color !== next.ink_color);
+        if(okPrev && okNext){ var tmp=trials[i]; trials[i]=trials[j]; trials[j]=tmp; break; }
+      }
+    }
+  }
+  return trials;
+}
+
+function smoothJunction(lastOfPrev, block){
+  if(!lastOfPrev || !block.length) return block;
+  if(block[0].stim_word === lastOfPrev.stim_word || block[0].ink_color === lastOfPrev.ink_color){
+    for(var j=1;j<block.length;j++){
+      var b = block[j];
+      if(b.stim_word !== lastOfPrev.stim_word && b.ink_color !== lastOfPrev.ink_color){
+        var tmp=block[0]; block[0]=block[j]; block[j]=tmp; break;
+      }
+    }
+  }
+  return block;
+}
+
+function makeStreamNoAdj_25(asNames){
+  var base = shuffle(COLORS.map(c => asNames ? c.name : c));
+  var out = [];
+  for(var r=0;r<5;r++){
+    for(var i=0;i<base.length;i++){
+      out.push(asNames ? base[i] : COLORS.find(c => c.name === base[i].name) || base[i]);
+    }
+  }
+  return out;
+}
+
+function make25_Squares(){
+  var inkStream = makeStreamNoAdj_25(false);
+  return inkStream.map(function(ink){
+    return {
+      stim_word: "SQUARE",
+      ink_color: ink.hex,
+      congruency: 2,
+      correct_key: ink.key,
+      correct_idx: ink.idx,
+      stim_type: "SQUARE"
+    };
+  });
+}
+
+function derangeBySwaps(inkNames, wordNames){
+  for(var i=0;i<wordNames.length;i++){
+    if(wordNames[i] === inkNames[i]){
+      var j = -1;
+      for(var k=i+1;k<wordNames.length;k++){
+        if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ j = k; break; }
+      }
+      if(j === -1){
+        for(k=0;k<i;k++){
+          if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ j = k; break; }
+        }
+      }
+      if(j !== -1){ var tmp=wordNames[i]; wordNames[i]=wordNames[j]; wordNames[j]=tmp; }
+    }
+  }
+  return wordNames;
+}
+
+function make25_WordsIncongruent(){
+  var inkStream = makeStreamNoAdj_25(false);
+  var inkNames = inkStream.map(c => c.name);
+  var wordNames = makeStreamNoAdj_25(true);
+  var wordsDeranged = derangeBySwaps(inkNames, wordNames.slice());
+
+  var trials = [];
+  for(var i=0;i<25;i++){
+    var ink = inkStream[i];
+    var wName = wordsDeranged[i];
+    if(wName === ink.name){
+      var swapIdx = (i+1)%25;
+      var tmp = wordsDeranged[i]; 
+      wordsDeranged[i]=wordsDeranged[swapIdx]; 
+      wordsDeranged[swapIdx]=tmp;
+      wName = wordsDeranged[i];
+    }
+    trials.push({
+      stim_word: wName,
+      ink_color: ink.hex,
+      congruency: 0,
+      correct_key: ink.key,
+      correct_idx: ink.idx,
+      stim_type: "WORD"
+    });
+  }
+  return fixNoImmediateRepeats(trials);
+}
+
+function split13_12(pair25, lastPrev){
+  var a = pair25.slice(0,13), b = pair25.slice(13);
+  a = fixNoImmediateRepeats(a); 
+  a = smoothJunction(lastPrev, a);
+  b = fixNoImmediateRepeats(b); 
+  b = smoothJunction(a[a.length-1], b);
+  return { first13:a, next12:b };
+}
+
+/* ------- CSV utils ------- */
+function toCSV(rows){
+  if(!rows.length) return "no_data\n";
+  var header = Object.keys(rows[0]), out=[header.join(",")];
+  for(var i=0;i<rows.length;i++){
+    var r = rows[i], line=[];
+    for(var k=0;k<header.length;k++){
+      var h=header[k]; 
+      var v=(r[h]==null ? "" : String(r[h]).replace(/"/g,'""'));
+      line.push(/["\n,]/.test(v) ? '"'+v+'"' : v);
+    }
+    out.push(line.join(","));
+  }
+  return out.join("\n");
+}
+
+function downloadCSV(filename, csv){
+  var blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); 
+  a.click(); 
+  a.remove();
+}
+
+/* ------- APLIKACJA ------- */
+var SUBJECT = null;
+var LOG = [];
+var BLOCKS = [];
+
+function parseSubjectCode(code){
+  var m = /^K\s*(\d{2})$/.exec((code||"").trim().toUpperCase());
+  if(!m) return null;
+  var num = parseInt(m[1],10);
+  var isEven = (num % 2 === 0);
+  return { code: "K"+m[1], num: num, isEven: isEven };
+}
+
+/* ------- EKRANY ------- */
+function screenIntro(){
+  app.innerHTML =
+    '<h2>Eksperyment Stroopa — Grupa K</h2>' +
+    '<div class="row">'+
+      '<p>Wpisz przydzielony Tobie kod<br><strong>(jedna litera i dwie cyfry, np. K01)</strong></p>' +
+      '<input id="pid" type="text" maxlength="3" pattern="[Kk][0-9]{2}" placeholder="np. K03" autofocus>'+
+    '</div>' +
+    '<div class="row"><button class="btn" id="next1">Dalej</button></div>';
+  
+  document.getElementById('next1').onclick = function(){
+    var v = (document.getElementById('pid').value||"").trim().toUpperCase();
+    var info = parseSubjectCode(v);
+    if(!info){ 
+      alert("Nieprawidłowy kod. Użyj formatu K01..K99. (Ten link dotyczy grupy K — nazywanie koloru)"); 
+      return; 
+    }
+    SUBJECT = info;
+    screenInstr();
+  };
+}
+
+function screenInstr(){
+  var warn = '<p class="center warning">⚠️ Ten link dotyczy nazywania kolorów. Kontynuuj zgodnie z instrukcją.</p>';
+  
+  var keyboardInstr = 
+    '<div class="center" style="margin:16px 0">'+
+      '<span class="keypill"><span class="k">C</span>CZERWONY</span>'+
+      '<span class="keypill"><span class="k">Z</span>ZIELONY</span>'+
+      '<span class="keypill"><span class="k">N</span>NIEBIESKI</span>'+
+      '<span class="keypill"><span class="k">F</span>FIOLETOWY</span>'+
+      '<span class="keypill"><span class="k">B</span>BRĄZOWY</span>'+
+    '</div>';
+  
+  var touchInstr = IS_TOUCH_DEVICE ? 
+    '<p class="center" style="color:#2d6cdf;font-weight:600;">📱 Używaj przycisków ekranowych na dole ekranu.</p>' :
+    '<p class="center warning">⚠️ Upewnij się, że <strong>CAPS LOCK jest wyłączony</strong>.</p>';
+  
+  app.innerHTML =
+    '<div class="instr-card">'+
+      '<h3 class="center">Instrukcja — NAZYWANIE KOLORU</h3>'+ 
+      warn +
+      '<p class="center error-text" style="font-size:20px;">⚠️ NAZYWAJ KOLORY, ignoruj treść słowa!</p>'+
+      '<p class="center">Twoim zadaniem jest jak najszybsze <strong>NAZWANIE KOLORU</strong>, w którym widzisz bodziec (kwadrat lub słowo).</p>'+
+      keyboardInstr +
+      touchInstr +
+      '<div class="center" style="margin-top:20px">'+
+        '<button class="btn" id="startExp">Zaczynam</button>'+
+      '</div>'+
+    '</div>';
+  
+  document.getElementById('startExp').onclick = prepareAndStart;
+}
+
+function screenPreBlock(n){
+  app.innerHTML =
+    '<div class="block-info">BLOK '+n+': nazywaj kolory</div>'+
+    '<div class="row"><button class="btn" id="startBlockBtn">Start</button></div>';
+}
+
+/* ------- SEKWENCJA: ABBA / BAAB, bloki 13–13–12–12 ------- */
+function prepareAndStart(){
+  SUBJECT.start_time = new Date().toISOString();
+  
+  var pairK  = make25_Squares();
+  var pairKS = make25_WordsIncongruent();
+
+  var splitK  = split13_12(pairK, null);
+  var splitKS = split13_12(pairKS, splitK.first13[splitK.first13.length-1]);
+
+  if(SUBJECT.isEven){
+    BLOCKS = [ splitK.first13, splitKS.first13, splitKS.next12, splitK.next12 ];
+  } else {
+    BLOCKS = [ splitKS.first13, splitK.first13, splitK.next12, splitKS.next12 ];
+  }
+
+  for(var i=1;i<BLOCKS.length;i++){
+    var prevLast = BLOCKS[i-1][BLOCKS[i-1].length-1];
+    BLOCKS[i] = smoothJunction(prevLast, BLOCKS[i]);
+  }
+
+  currentBlockIndex = 0;
+  screenPreBlock(1);
+  document.getElementById('startBlockBtn').onclick = function(){ runBlock(currentBlockIndex); };
+}
+
+var currentBlockIndex = 0;
+
+async function runBlock(blockIdx){
+  var trials = BLOCKS[blockIdx];
+  var blockNumber = blockIdx + 1;
+
+  for(var i=0;i<trials.length;i++){
+    app.innerHTML = '<div class="fix">+</div>';
+    await sleep(CONFIG.FIX);
+
+    var t = trials[i];
+    var start = performance.now();
+
+    // Display stimulus
+    var stimHTML;
+    if(t.stim_type === "SQUARE"){
+      stimHTML = '<div class="stim-card"><div class="square" style="background-color:'+t.ink_color+';"></div></div>';
+    } else {
+      stimHTML = '<div class="stim-card"><div class="big" style="color:'+t.ink_color+';">'+t.stim_word+'</div></div>';
+    }
+    
+    // Add touch buttons if needed
+    if(IS_TOUCH_DEVICE) {
+      stimHTML += '<div class="touch-buttons">';
+      COLORS.forEach(function(color) {
+        stimHTML += 
+          '<button class="touch-btn" data-key="'+color.key+'">'+
+            '<div class="letter">'+color.key.toUpperCase()+'</div>'+
+          '</button>';
+      });
+      stimHTML += '</div>';
+    }
+    
+    app.innerHTML = stimHTML;
+
+    var result = await new Promise(function(resolve){
+      var errors = 0; 
+      var timer;
+      var resolved = false;
+      
+      function handleResponse(k) {
+        if(resolved) return;
+        if(k !== t.correct_key){ 
+          errors++; 
+          // Visual feedback for touch
+          if(IS_TOUCH_DEVICE) {
+            var btn = document.querySelector('.touch-btn[data-key="'+k+'"]');
+            if(btn) {
+              btn.classList.add('wrong');
+              setTimeout(function(){ btn.classList.remove('wrong'); }, 300);
+            }
+          }
+          return; 
+        }
+        var rt = Math.round(performance.now() - start);
+        resolved = true;
+        cleanup(); 
+        resolve({ key:k, status:1, rt:rt, errors:errors });
+      }
+      
+      function onKey(e){
+        var k = (e.key||"").toLowerCase();
+        if(k==="c"||k==="z"||k==="n"||k==="f"||k==="b"){
+          handleResponse(k);
+        }
+      }
+      
+      function onTouch(e) {
+        var btn = e.target.closest('.touch-btn');
+        if(btn) {
+          e.preventDefault();
+          var k = btn.getAttribute('data-key');
+          handleResponse(k);
+        }
+      }
+      
+      function onTimeout(){ 
+        if(resolved) return;
+        resolved = true;
+        cleanup(); 
+        resolve({ key:"", status:3, rt: CONFIG.SAFETY_MS, errors:errors }); 
+      }
+      
+      function cleanup(){ 
+        window.removeEventListener('keydown', onKey); 
+        clearTimeout(timer);
+        var buttons = document.querySelectorAll('.touch-btn');
+        buttons.forEach(function(btn) {
+          btn.removeEventListener('touchstart', onTouch);
+          btn.removeEventListener('click', onTouch);
+        });
+      }
+      
+      window.addEventListener('keydown', onKey);
+      
+      if(IS_TOUCH_DEVICE) {
+        var buttons = document.querySelectorAll('.touch-btn');
+        buttons.forEach(function(btn) {
+          btn.addEventListener('touchstart', onTouch);
+          btn.addEventListener('click', onTouch);
+        });
+      }
+      
+      timer = setTimeout(onTimeout, CONFIG.SAFETY_MS);
+    });
+
+    LOG.push({
+      subject_code: SUBJECT.code,
+      group: "COLOR",
+      order_even: SUBJECT.isEven,
+      phase: (t.stim_type==="SQUARE" ? "K_SQUARES" : "K_WORDS"),
+      block: blockNumber,
+      trial_num: i + 1,
+      stim_word: t.stim_word || (t.stim_type==="SQUARE" ? "■" : ""),
+      ink_color: t.ink_color,
+      congruency: t.congruency,
+      correct_key: t.correct_key,
+      correct_idx: t.correct_idx,
+      key: result.key,
+      status: result.status,
+      rt: result.rt,
+      errors_before_correct: result.errors,
+      device_type: IS_TOUCH_DEVICE ? 'touch' : 'keyboard',
+      start_time: SUBJECT.start_time,
+      end_time: null
+    });
+    
+    app.innerHTML = '';
+    await sleep(CONFIG.ITI);
+  }
+
+  currentBlockIndex++;
+  if(currentBlockIndex < BLOCKS.length){
+    screenPreBlock(currentBlockIndex+1);
+    document.getElementById('startBlockBtn').onclick = function(){ runBlock(currentBlockIndex); };
+  } else { 
+    finish(); 
+  }
+}
+
+/* ------- ZAKOŃCZENIE ------- */
+async function finish(){
+  app.innerHTML = '<p class="muted">Przygotowywanie wyników…</p>';
+  await sleep(300);
+  
+  var end_time = new Date().toISOString();
+  for(var i = 0; i < LOG.length; i++) {
+    LOG[i].end_time = end_time;
+  }
+  
+  var csv = toCSV(LOG);
+  var filename = "stroop_color_" + SUBJECT.code + "_" + Date.now() + ".csv";
+  
+  // Try to send to Google Sheets first
+  var sent = false;
+  try {
+    await fetch(CONFIG.ENDPOINT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: LOG })
+    });
+    sent = true;
+    console.log("Data sent to Google Sheets successfully");
+  } catch(e) {
+    console.error("Failed to send to Google Sheets:", e);
+    sent = false;
+  }
+  
+  // Download CSV ONLY if Google Sheets upload failed
+  if(!sent) {
+    downloadCSV(filename, csv);
+  }
+  
+  app.innerHTML = 
+    '<div class="instr-card">'+
+      '<h3 class="center" style="color:#4CAF50;">✓ Gotowe!</h3>'+
+      '<p class="center">Dziękujemy za udział w eksperymencie.</p>'+
+      (sent ? '<p class="center muted">✅ Dane wysłane do Google Sheets.</p>' : '<p class="center muted">⚠️ Dane zapisane lokalnie (CSV).</p>')+
+    '</div>';
+}
+
+/* ------- START ------- */
+screenIntro();
+</script>
+</body>
+</html>
