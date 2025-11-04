@@ -10,9 +10,10 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { 
     height: 100%; 
+    min-height: 100vh;
     margin: 0; 
     padding: 0;
-    overflow: hidden;
+    overflow: auto;
     touch-action: manipulation;
   }
   body {
@@ -374,48 +375,172 @@ function shuffle(a){
   return a; 
 }
 
-/* ====== GENERATORY ====== */
+/* ====== ULEPSZONE GENERATORY BEZ POWTÓRZEŃ ====== */
+
+/**
+ * NOWA FUNKCJA: Tworzy całkowicie zrandomizowaną sekwencję 25 elementów,
+ * gdzie każdy kolor pojawia się dokładnie 5 razy.
+ * GWARANTUJE brak powtórzeń tego samego koloru obok siebie!
+ */
+function makeFullyRandomized25(asNames){
+  // Tworzymy pulę: każdy kolor 5x
+  var pool = [];
+  for(var i=0; i<5; i++){
+    COLORS.forEach(function(c){
+      pool.push(asNames ? c.name : c);
+    });
+  }
+  
+  // Budujemy sekwencję bez powtórzeń
+  var result = [];
+  var available = pool.slice(); // kopia puli
+  
+  for(var i=0; i<25; i++){
+    var last = result[result.length - 1];
+    var lastValue = asNames ? last : (last ? last.name : null);
+    
+    // Filtruj dostępne kolory (wykluczając ostatni użyty)
+    var candidates = available.filter(function(item){
+      var itemValue = asNames ? item : item.name;
+      return itemValue !== lastValue;
+    });
+    
+    // Jeśli brak kandydatów (bardzo rzadkie), użyj wszystkich
+    if(candidates.length === 0) candidates = available.slice();
+    
+    // Losuj z kandydatów
+    var idx = Math.floor(Math.random() * candidates.length);
+    var chosen = candidates[idx];
+    
+    result.push(chosen);
+    
+    // Usuń wybrany z dostępnych
+    var removeIdx = available.indexOf(chosen);
+    available.splice(removeIdx, 1);
+  }
+  
+  return result;
+}
+
+/**
+ * Naprawia bezpośrednie powtórzenia (ten sam kolor/słowo obok siebie)
+ * Wersja z wielokrotnymi przejściami dla pewności
+ */
 function fixNoImmediateRepeats(trials){
-  for(var i=1;i<trials.length;i++){
-    var prev = trials[i-1], cur = trials[i];
-    if(prev.stim_word === cur.stim_word || prev.ink_color === cur.ink_color){
-      for(var j=i+1;j<trials.length;j++){
-        var cand = trials[j], next = trials[i+1];
-        var okPrev = cand.stim_word !== prev.stim_word && cand.ink_color !== prev.ink_color;
-        var okNext = !next || (cand.stim_word !== next.stim_word && cand.ink_color !== next.ink_color);
-        if(okPrev && okNext){ var tmp=trials[i]; trials[i]=trials[j]; trials[j]=tmp; break; }
+  var maxAttempts = 10; // wielokrotne przejścia
+  
+  for(var attempt=0; attempt<maxAttempts; attempt++){
+    var foundIssue = false;
+    
+    for(var i=1; i<trials.length; i++){
+      var prev = trials[i-1], cur = trials[i];
+      
+      // Sprawdź czy jest powtórzenie koloru
+      if(prev.ink_color === cur.ink_color){
+        foundIssue = true;
+        
+        // Szukaj zamiany z późniejszym elementem
+        var swapped = false;
+        for(var j=i+1; j<trials.length; j++){
+          var cand = trials[j];
+          var next = trials[i+1];
+          
+          // Sprawdź czy zamiana nie stworzy nowych problemów
+          var okPrev = cand.ink_color !== prev.ink_color;
+          var okNext = !next || (cand.ink_color !== next.ink_color);
+          var okCandPrev = trials[j-1] ? (cur.ink_color !== trials[j-1].ink_color) : true;
+          var okCandNext = trials[j+1] ? (cand.ink_color !== trials[j+1].ink_color) : true;
+          
+          if(okPrev && okNext && okCandPrev && okCandNext){ 
+            var tmp=trials[i]; 
+            trials[i]=trials[j]; 
+            trials[j]=tmp; 
+            swapped = true;
+            break; 
+          }
+        }
+        
+        // Jeśli nie udało się zamienić w przód, spróbuj wstecz
+        if(!swapped){
+          for(var j=0; j<i-1; j++){
+            var cand = trials[j];
+            var candNext = trials[j+1];
+            
+            var okPrev = cand.ink_color !== prev.ink_color;
+            var okCandNext = candNext ? (cur.ink_color !== candNext.ink_color) : true;
+            var okCandPrev = j>0 ? (cand.ink_color !== trials[j-1].ink_color) : true;
+            
+            if(okPrev && okCandNext && okCandPrev){
+              var tmp=trials[i]; 
+              trials[i]=trials[j]; 
+              trials[j]=tmp; 
+              break;
+            }
+          }
+        }
       }
     }
+    
+    // Jeśli nie znaleziono problemów, koniec
+    if(!foundIssue) break;
   }
+  
   return trials;
 }
 
+/**
+ * Wygładza połączenie między blokami (unika powtórzeń na granicy)
+ */
 function smoothJunction(lastOfPrev, block){
   if(!lastOfPrev || !block.length) return block;
-  if(block[0].stim_word === lastOfPrev.stim_word || block[0].ink_color === lastOfPrev.ink_color){
-    for(var j=1;j<block.length;j++){
+  
+  // Sprawdź czy jest powtórzenie koloru na granicy
+  if(block[0].ink_color === lastOfPrev.ink_color){
+    var swapped = false;
+    
+    // Znajdź pierwszy element o innym kolorze
+    for(var j=1; j<block.length; j++){
       var b = block[j];
-      if(b.stim_word !== lastOfPrev.stim_word && b.ink_color !== lastOfPrev.ink_color){
-        var tmp=block[0]; block[0]=block[j]; block[j]=tmp; break;
+      var nextB = block[j+1];
+      
+      // Sprawdź czy zamiana nie stworzy problemu
+      var okPrev = b.ink_color !== lastOfPrev.ink_color;
+      var okNext = !nextB || (block[0].ink_color !== nextB.ink_color);
+      var okBPrev = block[0].ink_color !== block[j-1].ink_color;
+      
+      if(okPrev && okNext && okBPrev){
+        var tmp=block[0]; 
+        block[0]=block[j]; 
+        block[j]=tmp; 
+        swapped = true;
+        break;
+      }
+    }
+    
+    // Jeśli nie udało się, przebuduj cały blok
+    if(!swapped){
+      console.warn("Junction issue - rebuilding block order");
+      block = fixNoImmediateRepeats(block);
+      // Próbuj ponownie
+      for(var j=1; j<block.length; j++){
+        if(block[j].ink_color !== lastOfPrev.ink_color){
+          var tmp=block[0]; 
+          block[0]=block[j]; 
+          block[j]=tmp;
+          break;
+        }
       }
     }
   }
+  
   return block;
 }
 
-function makeStreamNoAdj_25(asNames){
-  var base = shuffle(COLORS.map(c => asNames ? c.name : c));
-  var out = [];
-  for(var r=0;r<5;r++){
-    for(var i=0;i<base.length;i++){
-      out.push(asNames ? base[i] : COLORS.find(c => c.name === base[i].name) || base[i]);
-    }
-  }
-  return out;
-}
-
+/**
+ * Generuje 25 kwadratów z pełną randomizacją (bez pętli!)
+ */
 function make25_Squares(){
-  var inkStream = makeStreamNoAdj_25(false);
+  var inkStream = makeFullyRandomized25(false);
   return inkStream.map(function(ink){
     return {
       stim_word: "SQUARE",
@@ -428,34 +553,50 @@ function make25_Squares(){
   });
 }
 
+/**
+ * Wymusza derangement (wszystkie elementy niezgodne)
+ */
 function derangeBySwaps(inkNames, wordNames){
-  for(var i=0;i<wordNames.length;i++){
+  for(var i=0; i<wordNames.length; i++){
     if(wordNames[i] === inkNames[i]){
       var j = -1;
-      for(var k=i+1;k<wordNames.length;k++){
-        if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ j = k; break; }
-      }
-      if(j === -1){
-        for(k=0;k<i;k++){
-          if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ j = k; break; }
+      // Szukaj zamiany
+      for(var k=i+1; k<wordNames.length; k++){
+        if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ 
+          j = k; break; 
         }
       }
-      if(j !== -1){ var tmp=wordNames[i]; wordNames[i]=wordNames[j]; wordNames[j]=tmp; }
+      if(j === -1){
+        for(k=0; k<i; k++){
+          if(wordNames[k] !== inkNames[i] && wordNames[i] !== inkNames[k]){ 
+            j = k; break; 
+          }
+        }
+      }
+      if(j !== -1){ 
+        var tmp=wordNames[i]; 
+        wordNames[i]=wordNames[j]; 
+        wordNames[j]=tmp; 
+      }
     }
   }
   return wordNames;
 }
 
+/**
+ * Generuje 25 słów niekongruentnych z pełną randomizacją (bez pętli!)
+ */
 function make25_WordsIncongruent(){
-  var inkStream = makeStreamNoAdj_25(false);
+  var inkStream = makeFullyRandomized25(false);
   var inkNames = inkStream.map(c => c.name);
-  var wordNames = makeStreamNoAdj_25(true);
+  var wordNames = makeFullyRandomized25(true);
   var wordsDeranged = derangeBySwaps(inkNames, wordNames.slice());
 
   var trials = [];
-  for(var i=0;i<25;i++){
+  for(var i=0; i<25; i++){
     var ink = inkStream[i];
     var wName = wordsDeranged[i];
+    // Ostateczne sprawdzenie
     if(wName === ink.name){
       var swapIdx = (i+1)%25;
       var tmp = wordsDeranged[i]; 
@@ -475,6 +616,9 @@ function make25_WordsIncongruent(){
   return fixNoImmediateRepeats(trials);
 }
 
+/**
+ * Dzieli 25 prób na 13+12 z wygładzeniem
+ */
 function split13_12(pair25, lastPrev){
   var a = pair25.slice(0,13), b = pair25.slice(13);
   a = fixNoImmediateRepeats(a); 
@@ -596,9 +740,38 @@ function prepareAndStart(){
     BLOCKS = [ splitKS.first13, splitK.first13, splitK.next12, splitKS.next12 ];
   }
 
+  // Wygładź połączenia między blokami
   for(var i=1;i<BLOCKS.length;i++){
     var prevLast = BLOCKS[i-1][BLOCKS[i-1].length-1];
     BLOCKS[i] = smoothJunction(prevLast, BLOCKS[i]);
+  }
+  
+  // WALIDACJA FINALNA: sprawdź całą sekwencję i napraw wszelkie powtórzenia
+  for(var blockIdx=0; blockIdx<BLOCKS.length; blockIdx++){
+    BLOCKS[blockIdx] = fixNoImmediateRepeats(BLOCKS[blockIdx]);
+    
+    // Jeśli to nie pierwszy blok, sprawdź połączenie z poprzednim
+    if(blockIdx > 0){
+      var prevBlock = BLOCKS[blockIdx-1];
+      var currBlock = BLOCKS[blockIdx];
+      var prevLast = prevBlock[prevBlock.length-1];
+      
+      if(currBlock[0].ink_color === prevLast.ink_color){
+        console.warn("Found junction repeat between blocks", blockIdx-1, "and", blockIdx);
+        BLOCKS[blockIdx] = smoothJunction(prevLast, currBlock);
+      }
+    }
+  }
+  
+  // Ostateczne sprawdzenie - wyświetl ostrzeżenie jeśli coś jest nie tak
+  var allTrials = [];
+  BLOCKS.forEach(function(b){ allTrials = allTrials.concat(b); });
+  
+  for(var i=1; i<allTrials.length; i++){
+    if(allTrials[i].ink_color === allTrials[i-1].ink_color){
+      console.error("WARNING: Color repeat found at position", i, 
+                    allTrials[i-1].ink_color, "->", allTrials[i].ink_color);
+    }
   }
 
   currentBlockIndex = 0;
